@@ -1,11 +1,12 @@
-# Module 10: Secure FastAPI User Model & CI/CD
+# Module 11: FastAPI Calculator Model & Validation
 
-This project demonstrates a secure user model for a FastAPI application using SQLAlchemy and password hashing. It is built on the Module 9 project and adds a full CI/CD pipeline with GitHub Actions and Docker Hub.
+This project defines the database models and business logic for a FastAPI calculator. It builds on Module 10 by adding a SQLAlchemy `Calculation` model, Pydantic validation (including for division by zero), and a factory pattern for the core logic.
 
 ## Project Features
 * **Secure User Model**: SQLAlchemy `User` model with `username`, `email`, and `password_hash`.
-* **Password Hashing**: Uses `bcrypt` for secure password hashing and verification.
-* **Pydantic Schemas**: `UserCreate` and `UserRead` schemas to safely handle data.
+* **Calculation Model**: SQLAlchemy `Calculation` model linked to users via a foreign key.
+* **Pydantic Schemas**: Validates all incoming data, including a custom check to prevent division by zero.
+* **Factory Pattern**: Uses a factory to easily select the correct mathematical operation (add, subtract, etc.).
 * **CI/CD Pipeline**: Automates testing and deployment to Docker Hub.
 * **Docker Compose**: Runs the full stack (FastAPI, PostgreSQL, pgAdmin).
 
@@ -41,7 +42,7 @@ You can run the unit and integration tests on your local machine.
     ```bash
     pytest
     ```
-    *(Note: Integration tests may fail locally if you don't have a database running with the correct environment variables.)*
+    *(Note: Integration tests require a running PostgreSQL database. The CI pipeline handles this automatically.)*
 
 ---
 
@@ -50,7 +51,7 @@ You can run the unit and integration tests on your local machine.
 The CI/CD pipeline automatically builds and pushes the Docker image for this project to Docker Hub.
 
 You can find the repository here:
-**[https://hub.docker.com/r/sm3777/module10-fastapi-secure](https://hub.docker.com/r/sm3777/module10-fastapi-secure)**
+**[https://hub.docker.com/r/sm3777/module11-fastapi-calculator](https://hub.docker.com/r/sm3777/module11-fastapi-calculator)**
 
 ---
 
@@ -62,7 +63,6 @@ This method runs the app directly on your machine using a Python virtual environ
 3.  Install dependencies:
     ```bash
     pip install -r requirements.txt
-    playwright install
     ```
 4.  Run the application:
     ```bash
