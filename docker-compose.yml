@@ -1,14 +1,11 @@
 version: '3.8'
 
 services:
-  # 1. The FastAPI Application Service
   app:
-    build: .  # Looks for the Dockerfile in this directory
-    
-    # --- THIS IS THE CORRECTED COMMAND ---
-    # It runs 'main:app' because the Dockerfile sets the working directory to /app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    
+    build: .
+    # --- FIX: Run from parent directory so 'app' package exists ---
+    command: sh -c "cd .. && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    # --------------------------------------------------------------
     volumes:
       - ./app:/app
     ports:
@@ -24,7 +21,6 @@ services:
     networks:
       - fastapi_net
 
-  # 2. The PostgreSQL Database Service
   db:
     image: postgres:15
     environment:
@@ -33,11 +29,12 @@ services:
       - POSTGRES_DB=fastapi_db
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
     networks:
       - fastapi_net
     restart: always
 
-  # 3. The pgAdmin Service
   pgadmin:
     image: dpage/pgadmin4
     environment:
