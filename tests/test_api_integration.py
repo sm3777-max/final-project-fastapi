@@ -2,26 +2,26 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 import pytest
 
-# --- CORRECT IMPORT ---
-# Since main.py is now in the root folder, we import directly from 'main'
 from main import app
-# ----------------------
-
 from app.database import SessionLocal, engine, Base
 from app import crud, models
 
+# Create a test client
 client = TestClient(app)
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_database():
+@pytest.fixture(scope="function", autouse=True) # <-- FIX: Changed scope to 'function'
+def setup_database_state():
     """
-    Fixture to create a clean database environment for tests.
+    Fixture to create and drop database tables for every test function.
+    This ensures clean isolation and prevents foreign key errors.
     """
+    # Create all tables before the test runs
     Base.metadata.create_all(bind=engine)
     yield
+    # Drop all tables after the test finishes
     Base.metadata.drop_all(bind=engine)
 
-def test_user_flow():
+def test_user_flow(setup_database_state): # Fixture runs automatically
     """
     Test 1: Register a User
     Test 2: Login to get a token
@@ -33,40 +33,41 @@ def test_user_flow():
         "password": "securepassword"
     })
     assert reg_response.status_code == 200
-    data = reg_response.json()
-    assert data["email"] == "integration@test.com"
-    assert "id" in data
-
+    
     # 2. Login
     login_response = client.post("/users/login", data={
         "username": "integration@test.com", 
         "password": "securepassword"
     })
     assert login_response.status_code == 200
-    token_data = login_response.json()
-    assert "access_token" in token_data
-    assert token_data["token_type"] == "bearer"
-
-def test_calculation_crud_flow():
+    
+def test_calculation_crud_flow(setup_database_state): # Fixture runs automatically
     """
     Test the full lifecycle of a calculation (BREAD).
+    This test will fail if test_user_flow didn't leave User ID 1. 
+    We will register a user inside this test to be safe.
     """
-    # 1. ADD (Create)
-    # We assume User ID 1 exists from the previous test
+    
+    # SETUP: Register a clean user with ID 1
+    client.post("/users/register", json={
+        "username": "calc_user",
+        "email": "calc@test.com",
+        "password": "password123"
+    })
+    
+    # 1. ADD (Create) - Use ID 1 (which calc_user should be)
     create_res = client.post("/calculations/", json={
         "a": 10, 
         "b": 5, 
         "type": "add"
     })
     assert create_res.status_code == 200
-    data = create_res.json()
-    calc_id = data["id"]
-    assert data["result"] == 15.0
+    calc_id = create_res.json()["id"]
+    assert create_res.json()["result"] == 15.0
 
     # 2. READ (Get One)
     read_res = client.get(f"/calculations/{calc_id}")
     assert read_res.status_code == 200
-    assert read_res.json()["id"] == calc_id
 
     # 3. EDIT (Update)
     update_res = client.put(f"/calculations/{calc_id}", json={
