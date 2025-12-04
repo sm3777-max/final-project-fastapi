@@ -1,42 +1,36 @@
 Module 14: Full-Stack FastAPI Calculator
 
-This project is the culmination of the FastAPI Calculator series. It transforms the backend API into a full-stack web application with secure user authentication, a persistent PostgreSQL database, and a frontend dashboard for managing calculations.
+This project transforms the FastAPI Calculator into a complete full-stack application. It integrates secure user authentication, a persistent PostgreSQL database, and a frontend dashboard for managing calculations via BREAD (Browse, Read, Edit, Add, Delete) operations.
 
 🚀 Project Features
 
 Backend (FastAPI)
 
-User Authentication: Secure registration and login using JWT (JSON Web Tokens).
+User Authentication: Secure POST /users/register and /users/login endpoints using JWT (JSON Web Tokens).
 
-BREAD Operations: Full Browse, Read, Edit, Add, and Delete endpoints for calculation data.
+BREAD Operations: Full REST API to manage user-specific calculations.
 
-Database: PostgreSQL integration using SQLAlchemy with a One-to-Many relationship (Users -> Calculations).
+Database: PostgreSQL integration using SQLAlchemy with relational models (Users -> Calculations).
 
-Security: Password hashing using bcrypt (via passlib wrapper).
+Security: Password hashing using bcrypt (via passlib).
 
 Frontend (HTML/JS)
 
-Login & Register Pages: Client-side forms that consume the API and store JWTs.
+Auth Pages: Functional Registration and Login forms.
 
-Dashboard: A protected interface that lists user-specific calculations and allows adding/deleting records.
+Dashboard: A protected interface that lists calculations, allows adding new ones, and deleting history.
 
-Validation: Client-side checks for input formats and error handling for API failures.
+Dynamic UI: Uses Vanilla JavaScript fetch API to interact with the backend securely using Bearer tokens.
 
 CI/CD & Testing
 
-Automated Testing: Comprehensive suite including:
+Automated Testing: 15+ tests covering Unit logic, API integration, and E2E browser flows using Playwright.
 
-Unit Tests: Logic and schema validation.
-
-API Integration Tests: Verifying backend endpoints using TestClient.
-
-E2E Tests: Browser automation using Playwright.
-
-GitHub Actions: Automates testing and deployment to Docker Hub on every push.
+GitHub Actions: Automates testing and Docker Hub deployment on every push.
 
 🐳 How to Run with Docker
 
-The application is fully containerized. To run it:
+The application is containerized for easy deployment.
 
 Clone the repository:
 
@@ -55,11 +49,11 @@ Frontend Dashboard: http://localhost:8000/static/login.html
 
 API Documentation: http://localhost:8000/docs
 
-pgAdmin (Database UI): http://localhost:5050
+pgAdmin: http://localhost:5050
 
 🧪 How to Run Tests Locally
 
-Because this project uses complex dependencies like passlib and bcrypt, we use a special TEST_MODE flag to ensure tests run smoothly across different environments (local vs. CI runner).
+Due to environmental differences in password hashing libraries across platforms, this project uses a TEST_MODE flag. This ensures tests run reliably by bypassing complex hashing during validation steps.
 
 1. Setup Environment
 
@@ -70,19 +64,20 @@ pip install -r requirements.txt
 
 2. Start the Server (Terminal 1)
 
-You must run the server manually for the E2E tests to connect. Use the TEST_MODE flag to bypass hash complexity during testing.
+You must run the server manually for the E2E tests to connect.
 
 export POSTGRES_HOST=localhost
 export POSTGRES_USER=postgres
 export POSTGRES_PASSWORD=password
 export POSTGRES_DB=fastapi_db
+# Enables stable testing environment
 export TEST_MODE=true
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 
 3. Run the Tests (Terminal 2)
 
-In a second terminal, run the test suite.
+In a second terminal, run the full test suite.
 
 POSTGRES_HOST=localhost pytest --base-url http://localhost:8000
 

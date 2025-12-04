@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .delete-btn { color: red; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Calculation Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+    <br><br>
+
+    <h3>Add New Calculation</h3>
+    <input type="number" id="a" placeholder="Number A" required>
+    <input type="number" id="b" placeholder="Number B" required>
+    <select id="type">
+        <option value="add">Add</option>
+        <option value="subtract">Subtract</option>
+        <option value="multiply">Multiply</option>
+        <option value="divide">Divide</option>
+    </select>
+    <button onclick="addCalculation()">Calculate</button>
+    <p id="error" style="color:red"></p>
+
+    <h3>History</h3>
+    <table id="calcTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>A</th>
+                <th>Type</th>
+                <th>B</th>
+                <th>Result</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        async function loadCalculations() {
+            const res = await fetch('/calculations/', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 401) logout();
+            const data = await res.json();
+            
+            const tbody = document.querySelector('#calcTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(calc => {
+                const row = `<tr>
+                    <td>${calc.id}</td>
+                    <td>${calc.a}</td>
+                    <td>${calc.type}</td>
+                    <td>${calc.b}</td>
+                    <td><strong>${calc.result}</strong></td>
+                    <td><span class="delete-btn" onclick="deleteCalc(${calc.id})">Delete</span></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        async function addCalculation() {
+            const a = document.getElementById('a').value;
+            const b = document.getElementById('b').value;
+            const type = document.getElementById('type').value;
+
+            const res = await fetch('/calculations/', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ a: Number(a), b: Number(b), type })
+            });
+
+            if (res.ok) {
+                loadCalculations();
+                document.getElementById('a').value = '';
+                document.getElementById('b').value = '';
+            } else {
+                const err = await res.json();
+                document.getElementById('error').innerText = err.detail || "Error";
+            }
+        }
+
+        async function deleteCalc(id) {
+            if(!confirm("Are you sure?")) return;
+            await fetch('/calculations/' + id, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadCalculations();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/static/login.html';
+        }
+
+        loadCalculations();
+    </script>
+</body>
+</html>

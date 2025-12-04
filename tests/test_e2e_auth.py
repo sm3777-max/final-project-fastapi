@@ -3,8 +3,9 @@ from playwright.sync_api import Page, expect
 import random
 import time
 import requests 
+from app.database import engine, Base
 
-# Helper function to generate unique user data
+# Helper to generate unique user data
 def get_random_user():
     rand_id = random.randint(100000, 999999) 
     return {
@@ -13,8 +14,7 @@ def get_random_user():
         "password": "securepass"
     }
 
-# --- WAIT FOR SERVER FIXTURE (Critical for CI Stability) ---
-
+# --- SERVER WAIT LOGIC ---
 def wait_for_app_startup(url, timeout=25):
     """Polls the given URL until it returns a 200 status."""
     start_time = time.time()
@@ -22,7 +22,6 @@ def wait_for_app_startup(url, timeout=25):
         try:
             response = requests.get(url)
             if response.status_code == 200:
-                print("\n[INFO] Server is UP!")
                 return
         except requests.exceptions.ConnectionError:
             pass
@@ -32,47 +31,63 @@ def wait_for_app_startup(url, timeout=25):
 @pytest.fixture(scope="session", autouse=True)
 def wait_for_server_start(base_url):
     """Fixture that runs once per session to wait for the app service."""
-    # Final Fix: Hardcode the target for the polling function to prevent the schema error.
     wait_for_app_startup("http://localhost:8000/") 
 
-# --------------------------------------------------------------------------
-# --- TEMPORARILY DISABLED E2E TESTS TO BYPASS CI RUNNER HASHING CRASH ---
-# --------------------------------------------------------------------------
+# --- DATABASE SETUP FIXTURE (CRITICAL FIX) ---
+@pytest.fixture(scope="function", autouse=True)
+def setup_database():
+    """
+    Forces table creation before every test function.
+    This fixes the issue where previous integration tests dropped the tables.
+    """
+    Base.metadata.create_all(bind=engine)
+    yield
+    # We don't drop here to ensure state persists for manual inspection if needed
+# ---------------------------------------------
 
-# def test_frontend_register(page: Page, base_url):
-#     # This test is disabled because it crashes the CI runner on hashing
-#     user = get_random_user()
-#     page.goto(f"{base_url}/static/register.html")
-#     page.fill("#email", user["email"])
-#     page.fill("#username", user["username"])
-#     page.fill("#password", user["password"])
-#     page.click("button[type=submit]")
-#     message = page.locator("#message")
-#     expect(message).to_contain_text("Registration Successful", timeout=15000)
-
-# def test_frontend_login(page: Page, base_url):
-#     # This test is disabled because it relies on the passing register test
-#     user = get_random_user()
-#     # Register them via the UI (CRASHES HERE)
-#     page.goto(f"{base_url}/static/register.html")
-#     page.fill("#email", user["email"])
-#     page.fill("#username", user["username"])
-#     page.fill("#password", user["password"])
-#     page.click("button[type=submit]")
-#     expect(page.locator("#message")).to_contain_text("Registration Successful", timeout=15000)
+# --- TEST 1: REGISTRATION ---
+def test_frontend_register(page: Page, base_url):
+    user = get_random_user()
     
-#     # Now go to Login page
-#     page.goto(f"{base_url}/static/login.html")
-#     page.fill("#username", user["email"]) 
-#     page.fill("#password", user["password"])
-#     page.click("button[type=submit]")
-#     expect(page.locator("#message")).to_contain_text("Login Successful", timeout=15000)
+    page.goto(f"{base_url}/static/register.html")
+    
+    page.fill("#email", user["email"])
+    page.fill("#username", user["username"])
+    page.fill("#password", user["password"])
+    
+    page.click("button[type=submit]")
+    
+    message = page.locator("#message")
+    expect(message).to_contain_text("Registration Successful", timeout=15000)
 
-# def test_frontend_login_fail(page: Page, base_url):
-#     # This test is disabled as it relies on the server being stable
-#     page.goto(f"{base_url}/static/login.html")
-#     page.fill("#username", "nonexistent@user.com")
-#     page.fill("#password", "wrongpass")
-#     page.click("button[type=submit]")
-#     message = page.locator("#message")
-#     expect(message).to_contain_text("Invalid credentials", timeout=15000)
+# --- TEST 2: LOGIN ---
+def test_frontend_login(page: Page, base_url):
+    user = get_random_user()
+    
+    # Register first via UI
+    page.goto(f"{base_url}/static/register.html")
+    page.fill("#email", user["email"])
+    page.fill("#username", user["username"])
+    page.fill("#password", user["password"])
+    page.click("button[type=submit]")
+    expect(page.locator("#message")).to_contain_text("Registration Successful", timeout=15000)
+    
+    # Then Login
+    page.goto(f"{base_url}/static/login.html")
+    page.fill("#username", user["email"]) 
+    page.fill("#password", user["password"])
+    page.click("button[type=submit]")
+    
+    message = page.locator("#message")
+    expect(message).to_contain_text("Login Successful", timeout=15000)
+
+# --- TEST 3: LOGIN FAIL ---
+def test_frontend_login_fail(page: Page, base_url):
+    page.goto(f"{base_url}/static/login.html")
+    
+    page.fill("#username", "nonexistent@user.com")
+    page.fill("#password", "wrongpass")
+    page.click("button[type=submit]")
+    
+    message = page.locator("#message")
+    expect(message).to_contain_text("Invalid credentials", timeout=15000)
