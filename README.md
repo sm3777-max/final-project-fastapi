@@ -1,18 +1,22 @@
-Module 14: Full-Stack FastAPI Calculator
+Final Project: Full-Stack FastAPI Calculator
 
-This project transforms the FastAPI Calculator into a complete full-stack application. It integrates secure user authentication, a persistent PostgreSQL database, and a frontend dashboard for managing calculations via BREAD (Browse, Read, Edit, Add, Delete) operations.
+This is the final project for the Python Web API Development course. It represents a complete full-stack web application built with FastAPI, PostgreSQL, and vanilla JavaScript, featuring advanced calculation capabilities and user statistics.
 
 🚀 Project Features
 
 Backend (FastAPI)
 
-User Authentication: Secure POST /users/register and /users/login endpoints using JWT (JSON Web Tokens).
+User Authentication: Secure registration and login using JWT (JSON Web Tokens).
 
-BREAD Operations: Full REST API to manage user-specific calculations.
+BREAD Operations: Full REST API to Browse, Read, Edit, Add, and Delete calculations.
+
+Advanced Calculation: Includes a new Power (^) operation (Feature A).
+
+History/Reports: A /stats endpoint that returns the total count of calculations per user (Feature B).
 
 Database: PostgreSQL integration using SQLAlchemy with relational models (Users -> Calculations).
 
-Security: Password hashing using bcrypt (via passlib).
+Security: Password hashing using bcrypt (via passlib wrapper).
 
 Frontend (HTML/JS)
 
@@ -20,22 +24,30 @@ Auth Pages: Functional Registration and Login forms.
 
 Dashboard: A protected interface that lists calculations, allows adding new ones, and deleting history.
 
+User Statistics: Displays the total number of calculations performed by the user in a dedicated stats box.
+
 Dynamic UI: Uses Vanilla JavaScript fetch API to interact with the backend securely using Bearer tokens.
 
 CI/CD & Testing
 
-Automated Testing: 15+ tests covering Unit logic, API integration, and E2E browser flows using Playwright.
+Automated Testing: Comprehensive suite including:
 
-GitHub Actions: Automates testing and Docker Hub deployment on every push.
+Unit Tests: Logic validation (including Power function) and schema validation.
+
+API Integration Tests: Verifying backend endpoints (including /stats) using TestClient.
+
+E2E Tests: Browser automation using Playwright to test the full user flow (Register -> Login -> Dashboard -> Add Calc -> Delete).
+
+GitHub Actions: Automates testing and deployment to Docker Hub on every push.
 
 🐳 How to Run with Docker
 
-The application is containerized for easy deployment.
+The application is fully containerized for easy deployment.
 
 Clone the repository:
 
-git clone [https://github.com/sm3777-max/module14-fastapi-bread.git](https://github.com/sm3777-max/module14-fastapi-bread.git)
-cd module14-fastapi-bread
+git clone [https://github.com/sm3777-max/final-project-fastapi.git](https://github.com/sm3777-max/final-project-fastapi.git)
+cd final-project-fastapi
 
 
 Start the containers:
@@ -49,11 +61,11 @@ Frontend Dashboard: http://localhost:8000/static/login.html
 
 API Documentation: http://localhost:8000/docs
 
-pgAdmin: http://localhost:5050
+pgAdmin (Database UI): http://localhost:5050
 
 🧪 How to Run Tests Locally
 
-Due to environmental differences in password hashing libraries across platforms, this project uses a TEST_MODE flag. This ensures tests run reliably by bypassing complex hashing during validation steps.
+Due to environmental differences in password hashing libraries across platforms, this project uses a special TEST_MODE flag. This ensures tests run reliably by bypassing complex hashing during validation steps.
 
 1. Setup Environment
 
@@ -64,7 +76,7 @@ pip install -r requirements.txt
 
 2. Start the Server (Terminal 1)
 
-You must run the server manually for the E2E tests to connect.
+You must run the server manually for the E2E tests to connect. Use the TEST_MODE flag to bypass hash complexity during testing.
 
 export POSTGRES_HOST=localhost
 export POSTGRES_USER=postgres
@@ -86,4 +98,4 @@ POSTGRES_HOST=localhost pytest --base-url http://localhost:8000
 
 The CI/CD pipeline automatically builds and pushes the Docker image to Docker Hub upon successful testing.
 
-Repository Link: https://hub.docker.com/r/sm3777/module14-fastapi-bread
+Repository Link: https://hub.docker.com/r/sm3777/final-project-fastapi
