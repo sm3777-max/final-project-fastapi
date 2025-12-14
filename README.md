@@ -98,4 +98,4 @@ POSTGRES_HOST=localhost pytest --base-url http://localhost:8000
 
 The CI/CD pipeline automatically builds and pushes the Docker image to Docker Hub upon successful testing.
 
-Repository Link: https://hub.docker.com/r/sm3777/final-project-fastapi
+Repository Link: https://hub.docker.com/r/sm3777/final-project-fastapi 
